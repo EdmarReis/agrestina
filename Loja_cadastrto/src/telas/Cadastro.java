@@ -22,6 +22,7 @@ import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.ParseException;
 import java.awt.event.InputEvent;
 import java.awt.event.ActionListener;
@@ -57,17 +58,13 @@ public class Cadastro extends JFrame {
 	private MaskFormatter mascaraCpf;
 	private MaskFormatter mascaraCelular;
 	private JTable tblProdutos;
-	private JTextField txtIdProduto;
-	private JTextField txtIdCliente;
 	private JTable tblClientes;
+	private JTextField txtFoto;
+	JLabel lblFoto = new JLabel("Foto");
 	
 	Connection conexao = null;
 	PreparedStatement pst = null;
 	ResultSet rs = null;
-	private JTextField txtFoto;
-	
-	JLabel lblFoto = new JLabel("Foto");
-	
 
 	/**
 	 * Launch the application.
@@ -158,7 +155,7 @@ public class Cadastro extends JFrame {
 		});
 		
 		produto.setColumns(10);
-		produto.setBounds(103, 6, 203, 26);
+		produto.setBounds(103, 6, 292, 26);
 		panel_1.add(produto);
 		
 		JLabel lblQuantidade = new JLabel("Código");
@@ -284,17 +281,6 @@ public class Cadastro extends JFrame {
 		tblProdutos.setBounds(16, 309, 595, 98);
 		panel_1.add(tblProdutos);
 		
-		JLabel lblIdProduto = new JLabel("Id");
-		lblIdProduto.setBounds(318, 11, 46, 16);
-		panel_1.add(lblIdProduto);
-		
-		txtIdProduto = new JTextField();
-		txtIdProduto.setEnabled(false);
-		txtIdProduto.setEditable(false);
-		txtIdProduto.setColumns(10);
-		txtIdProduto.setBounds(340, 6, 55, 26);
-		panel_1.add(txtIdProduto);
-		
 		//JLabel lblFoto = new JLabel("Foto");
 		lblFoto.setBounds(407, 11, 204, 141);
 		panel_1.add(lblFoto);
@@ -362,7 +348,7 @@ public class Cadastro extends JFrame {
 				pesquisarClientes();
 			}
 		});
-		nome.setBounds(103, 6, 346, 26);
+		nome.setBounds(103, 6, 508, 26);
 		panel.add(nome);
 		nome.setColumns(10);
 		
@@ -452,17 +438,6 @@ public class Cadastro extends JFrame {
 		btnPesquisarCliente.setBounds(538, 227, 73, 70);
 		panel.add(btnPesquisarCliente);
 		
-		JLabel lblIdCliente = new JLabel("Id");
-		lblIdCliente.setBounds(461, 11, 61, 16);
-		panel.add(lblIdCliente);
-		
-		txtIdCliente = new JTextField();
-		txtIdCliente.setEnabled(false);
-		txtIdCliente.setEditable(false);
-		txtIdCliente.setColumns(10);
-		txtIdCliente.setBounds(481, 6, 130, 26);
-		panel.add(txtIdCliente);
-		
 		tblClientes = new JTable();
 		tblClientes.addMouseListener(new MouseAdapter() {
 			@Override
@@ -475,44 +450,51 @@ public class Cadastro extends JFrame {
 	}
 
 	private void excluirProduto() {
-		String sql = "delete from produtos where id = ?";
+		String sql = "delete from produtos where codigo = ?";
+		String sqlConsultaProduto = "select * from produtos where codigo = ?";
 		try {
-			pst = conexao.prepareStatement(sql);
-			pst.setString(1, txtIdProduto.getText());
-			boolean alteracao = pst.execute();
-			JOptionPane.showMessageDialog(null, "O Produto com Id "+txtIdProduto.getText()+" foi excluído.","Aviso",JOptionPane.INFORMATION_MESSAGE);
-			//System.out.println(alteracao);
+			pst = conexao.prepareStatement(sqlConsultaProduto);
+			pst.setString(1, codigo.getText());
+			rs = pst.executeQuery();
+		
+			if(rs.next()) {
+				pst = conexao.prepareStatement(sql);
+				pst.setString(1, codigo.getText());
+				
+				boolean alteracao = pst.execute();
+				JOptionPane.showMessageDialog(null, "O Produto com código "+codigo.getText()+" foi excluído.","Aviso",JOptionPane.INFORMATION_MESSAGE);
+				
+			}else {
+				JOptionPane.showMessageDialog(null, "Exclusão não efetuada. Não foi encontrado produto com código "+codigo.getText(), "Erro!", JOptionPane.ERROR_MESSAGE);
+			}
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, e);
 		}
 	}
 	
 	private void excluirCliente() {
-		String sql = "delete from clientes where id = ?";
+		String sql = "delete from clientes where cpf_cnpj = ?";
 		try {
 			pst = conexao.prepareStatement(sql);
-			pst.setString(1, txtIdCliente.getText());
+			pst.setString(1, cpf.getText());
 			boolean alteracao = pst.execute();
-			JOptionPane.showMessageDialog(null, "O Cliente com Id "+txtIdCliente.getText()+" foi excluído","Aviso",JOptionPane.INFORMATION_MESSAGE);
-			//System.out.println(alteracao);
+			JOptionPane.showMessageDialog(null, "O Cliente com CNPJ/CPF "+cpf.getText()+" foi excluído","Aviso",JOptionPane.INFORMATION_MESSAGE);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, e);
 		}
 	}
 	
 	private void alterarProduto() {
-		String sql = "update produtos set codigo = ?, preco = ?, nome = ?, descricao = ?, unidade = ?, foto = ? where id = ?";
+		String sql = "update produtos set preco = ?, nome = ?, descricao = ?, unidade = ?, foto = ? where codigo = ?";
 		try {
 			pst = conexao.prepareStatement(sql);
-			pst.setString(1, codigo.getText());
-			pst.setString(2, preco.getText());
-			pst.setString(3, produto.getText());
-			pst.setString(4, descricao.getText());
-			pst.setString(5, (String) unidade.getSelectedItem());
-			pst.setString(6, txtFoto.getText());
-			pst.setString(7, txtIdProduto.getText());
+			pst.setString(1, preco.getText());
+			pst.setString(2, produto.getText());
+			pst.setString(3, descricao.getText());
+			pst.setString(4, (String) unidade.getSelectedItem());
+			pst.setString(5, txtFoto.getText());
+			pst.setString(6, codigo.getText());
 			int alteracao = pst.executeUpdate();
-			//System.out.println(alteracao);
 			
 			if(alteracao > 0) {
 				JOptionPane.showMessageDialog(null, "Alteração realizada com sucesso");
@@ -522,21 +504,23 @@ public class Cadastro extends JFrame {
 			}
 			
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null, e);
+			JOptionPane.showMessageDialog(null, e,"Erro!",JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
 	private void alterarCliente() {
 		
-		String sql = "update clientes set nome = ?, endereco = ?, cpf_cnpj = ?, telefone = ?, email = ? where id = ?";
+		//String sql = "update clientes set nome = ?, endereco = ?, cpf_cnpj = ?, telefone = ?, email = ? where id = ?";
+		String sql = "update clientes set nome = ?, endereco = ?, telefone = ?, email = ? where cpf_cnpj = ?";
 		try {
 			pst = conexao.prepareStatement(sql);
 			pst.setString(1, nome.getText());
 			pst.setString(2, endereco.getText());
-			pst.setString(3, cpf.getText());
-			pst.setString(4, celular.getText());
-			pst.setString(5, email.getText());
-			pst.setString(6, txtIdCliente.getText());
+			//pst.setString(3, cpf.getText());
+			pst.setString(3, celular.getText());
+			pst.setString(4, email.getText());
+			pst.setString(5, cpf.getText());
+			//pst.setString(6, txtIdCliente.getText());
 			int alteracao = pst.executeUpdate();
 			//System.out.println(alteracao);
 			
@@ -587,27 +571,25 @@ public class Cadastro extends JFrame {
 	//metodo para preencher automaticamente os campos quando selecionada a linha na tabela - funciona junto com o evento de click do mouise na jtable
 	private void setCamposProdutos() {
 		int setar = tblProdutos.getSelectedRow();
-		produto.setText(tblProdutos.getModel().getValueAt(setar, 1).toString());
-		codigo.setText(tblProdutos.getModel().getValueAt(setar, 2).toString());
-		preco.setText(tblProdutos.getModel().getValueAt(setar, 3).toString());
-		descricao.setText(tblProdutos.getModel().getValueAt(setar, 5).toString());
-		unidade.setSelectedItem(tblProdutos.getModel().getValueAt(setar, 4).toString());
-		txtIdProduto.setText(tblProdutos.getModel().getValueAt(setar, 0).toString());
-		txtFoto.setText(tblProdutos.getModel().getValueAt(setar, 6).toString());
-		//String foto = 
-		//lblFoto.setIcon(txtFoto.getText());
+		produto.setText(tblProdutos.getModel().getValueAt(setar, 0).toString());
+		codigo.setText(tblProdutos.getModel().getValueAt(setar, 1).toString());
+		preco.setText(tblProdutos.getModel().getValueAt(setar, 2).toString());
+		descricao.setText(tblProdutos.getModel().getValueAt(setar, 4).toString());
+		unidade.setSelectedItem(tblProdutos.getModel().getValueAt(setar, 3).toString());
+		//txtIdProduto.setText(tblProdutos.getModel().getValueAt(setar, 0).toString());
+		txtFoto.setText(tblProdutos.getModel().getValueAt(setar, 5).toString());
 		ImageIcon imageIcon = new ImageIcon(new ImageIcon("/Users/edmar_sr/Desktop/Edmar/Programacao/Java/Agrestina/imagensProdutos/"+txtFoto.getText()+".png").getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
 		lblFoto.setIcon(imageIcon);
 	}
 	
 	private void setCamposClientes() {
 		int setar = tblClientes.getSelectedRow();
-		txtIdCliente.setText(tblClientes.getModel().getValueAt(setar, 0).toString());
-		nome.setText(tblClientes.getModel().getValueAt(setar, 1).toString());
-		endereco.setText(tblClientes.getModel().getValueAt(setar, 2).toString());
-		cpf.setText(tblClientes.getModel().getValueAt(setar, 3).toString());
-		celular.setText(tblClientes.getModel().getValueAt(setar, 4).toString());
-		email.setText(tblClientes.getModel().getValueAt(setar, 5).toString());
+		//txtIdCliente.setText(tblClientes.getModel().getValueAt(setar, 0).toString());
+		nome.setText(tblClientes.getModel().getValueAt(setar, 0).toString());
+		endereco.setText(tblClientes.getModel().getValueAt(setar, 1).toString());
+		cpf.setText(tblClientes.getModel().getValueAt(setar, 2).toString());
+		celular.setText(tblClientes.getModel().getValueAt(setar, 3).toString());
+		email.setText(tblClientes.getModel().getValueAt(setar, 4).toString());
 	}
 
 	private void limpaTelaCliente() {
@@ -616,7 +598,7 @@ public class Cadastro extends JFrame {
 		cpf.setText(null);
 		email.setText(null);
 		endereco.setText(null);
-		txtIdCliente.setText(null);
+		//txtIdCliente.setText(null);
 	}
 
 	private void limpaTelaProduto() {
@@ -624,7 +606,7 @@ public class Cadastro extends JFrame {
 		preco.setText(null);
 		codigo.setText(null);
 		descricao.setText(null);
-		txtIdProduto.setText(null);
+		//txtIdProduto.setText(null);
 		txtFoto.setText(null);
 		lblFoto.setIcon(null);
 	}
@@ -642,14 +624,14 @@ public class Cadastro extends JFrame {
 			pst.setString(6, txtFoto.getText());
 			pst.execute();
 			
-			JOptionPane.showMessageDialog(null, "Registro incluído com sucesso");
-			
+			JOptionPane.showMessageDialog(null, "Produto incluído com sucesso");
 
-		} catch (Exception e) {
+		} catch (SQLIntegrityConstraintViolationException e) {
 			// TODO: handle exception
-			JOptionPane.showMessageDialog(null, e);
+			JOptionPane.showMessageDialog(null, "Não é possível inserir o mesmo código duas vezes."+"\n"+e,"Erro!",JOptionPane.ERROR_MESSAGE);
+		}catch(Exception e){
+			JOptionPane.showMessageDialog(null,e,"Erro!",JOptionPane.ERROR_MESSAGE);
 		}
-		
 	}
 
 	private void salvarCliente() {
@@ -664,12 +646,13 @@ public class Cadastro extends JFrame {
 			pst.setString(5, email.getText());
 			pst.execute();
 			
-			JOptionPane.showMessageDialog(null, "Registro incluído com sucesso");
-			
+			JOptionPane.showMessageDialog(null, "Cliente incluído com sucesso");
 
-		} catch (Exception e) {
+		} catch (SQLIntegrityConstraintViolationException e) {
 			// TODO: handle exception
-			JOptionPane.showMessageDialog(null, e);
+			JOptionPane.showMessageDialog(null, "Não é possível inserir o mesmo CPF/CNPJ duas vezes."+"\n"+e,"Erro!",JOptionPane.ERROR_MESSAGE);
+		}catch(Exception e){
+			JOptionPane.showMessageDialog(null,e,"Erro!",JOptionPane.ERROR_MESSAGE);
 		}
 		
 	}
