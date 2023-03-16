@@ -34,6 +34,7 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JTable;
 
@@ -41,6 +42,8 @@ import net.proteanit.sql.DbUtils;
 import java.awt.event.KeyAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import javax.swing.JScrollPane;
 
 public class Cadastro extends JFrame {
 
@@ -59,12 +62,13 @@ public class Cadastro extends JFrame {
 	private MaskFormatter mascaraCelular;
 	private JTable tblProdutos;
 	private JTable tblClientes;
-	private JTextField txtFoto;
+	private String caminhoFoto;
 	JLabel lblFoto = new JLabel("Foto");
 	
 	Connection conexao = null;
 	PreparedStatement pst = null;
 	ResultSet rs = null;
+	private JTable table;
 
 	/**
 	 * Launch the application.
@@ -265,7 +269,7 @@ public class Cadastro extends JFrame {
 		panel_1.add(codigo);
 		
 		unidade = new JComboBox();
-		unidade.setModel(new DefaultComboBoxModel(new String[] {"Kilo", "Unidade", "Saco", "Gramas", "Pote", "Duzia", "Litro"}));
+		unidade.setModel(new DefaultComboBoxModel(new String[] {"Kilo", "Unidade", "Saco", "Gramas", "Pote", "Duzia", "Litro", "ml"}));
 		unidade.setBounds(103, 91, 292, 27);
 		panel_1.add(unidade);
 		
@@ -285,21 +289,24 @@ public class Cadastro extends JFrame {
 		lblFoto.setBounds(407, 11, 204, 141);
 		panel_1.add(lblFoto);
 		
-		txtFoto = new JTextField();
-		txtFoto.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyReleased(KeyEvent e) {
-				ImageIcon imageIcon = new ImageIcon(new ImageIcon("/Users/edmar_sr/Desktop/Edmar/Programacao/Java/Agrestina/imagensProdutos/"+txtFoto.getText()+".png").getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
-				lblFoto.setIcon(imageIcon);
+		JButton btnFindFoto = new JButton("Buscar foto");
+		btnFindFoto.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+				int respFc = fc.showOpenDialog(null);
+				
+				if(respFc == JFileChooser.APPROVE_OPTION) {
+					caminhoFoto = fc.getSelectedFile().toString();
+					ImageIcon imageIcon = new ImageIcon(new ImageIcon(caminhoFoto).getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
+					lblFoto.setIcon(imageIcon);
+					System.out.println(caminhoFoto);
+				}else {
+					JOptionPane.showMessageDialog(null, "Nenhum arquivo selecionado.","Aviso",JOptionPane.WARNING_MESSAGE);
+				}
 			}
 		});
-		txtFoto.setColumns(10);
-		txtFoto.setBounds(470, 175, 141, 26);
-		panel_1.add(txtFoto);
-		
-		JLabel lblNomeFoto = new JLabel("Imagem");
-		lblNomeFoto.setBounds(404, 180, 61, 16);
-		panel_1.add(lblNomeFoto);
+		btnFindFoto.setBounds(472, 175, 95, 29);
+		panel_1.add(btnFindFoto);
 		
 		JPanel panel = new JPanel();
 		tabbedPane.addTab("Clientes", null, panel, null);
@@ -447,6 +454,17 @@ public class Cadastro extends JFrame {
 		});
 		tblClientes.setBounds(6, 304, 605, 103);
 		panel.add(tblClientes);
+		
+		JPanel panel_2 = new JPanel();
+		tabbedPane.addTab("New tab", null, panel_2, null);
+		panel_2.setLayout(null);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(109, 100, 354, 307);
+		panel_2.add(scrollPane);
+		
+		table = new JTable();
+		scrollPane.setViewportView(table);
 	}
 
 	private void excluirProduto() {
@@ -492,7 +510,8 @@ public class Cadastro extends JFrame {
 			pst.setString(2, produto.getText());
 			pst.setString(3, descricao.getText());
 			pst.setString(4, (String) unidade.getSelectedItem());
-			pst.setString(5, txtFoto.getText());
+			//pst.setString(5, txtFoto.getText());
+			pst.setString(5, caminhoFoto);
 			pst.setString(6, codigo.getText());
 			int alteracao = pst.executeUpdate();
 			
@@ -577,9 +596,12 @@ public class Cadastro extends JFrame {
 		descricao.setText(tblProdutos.getModel().getValueAt(setar, 4).toString());
 		unidade.setSelectedItem(tblProdutos.getModel().getValueAt(setar, 3).toString());
 		//txtIdProduto.setText(tblProdutos.getModel().getValueAt(setar, 0).toString());
-		txtFoto.setText(tblProdutos.getModel().getValueAt(setar, 5).toString());
-		ImageIcon imageIcon = new ImageIcon(new ImageIcon("/Users/edmar_sr/Desktop/Edmar/Programacao/Java/Agrestina/imagensProdutos/"+txtFoto.getText()+".png").getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
+		ImageIcon imageIcon = new ImageIcon(new ImageIcon(tblProdutos.getModel().getValueAt(setar, 5).toString()).getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
 		lblFoto.setIcon(imageIcon);
+		//lblFoto.setIcon("");
+		//txtFoto.setText(tblProdutos.getModel().getValueAt(setar, 5).toString());
+		//ImageIcon imageIcon = new ImageIcon(new ImageIcon("/Users/edmar_sr/Desktop/Edmar/Programacao/Java/Agrestina/imagensProdutos/"+txtFoto.getText()+".png").getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
+		//lblFoto.setIcon(imageIcon);
 	}
 	
 	private void setCamposClientes() {
@@ -606,8 +628,6 @@ public class Cadastro extends JFrame {
 		preco.setText(null);
 		codigo.setText(null);
 		descricao.setText(null);
-		//txtIdProduto.setText(null);
-		txtFoto.setText(null);
 		lblFoto.setIcon(null);
 	}
 
@@ -621,7 +641,8 @@ public class Cadastro extends JFrame {
 			pst.setString(3, descricao.getText());
 			pst.setString(4, produto.getText());
 			pst.setString(5, (String) unidade.getSelectedItem());
-			pst.setString(6, txtFoto.getText());
+			//pst.setString(6, txtFoto.getText());
+			pst.setString(6, caminhoFoto);
 			pst.execute();
 			
 			JOptionPane.showMessageDialog(null, "Produto incluído com sucesso");
