@@ -2,6 +2,7 @@ package telas;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.Image;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -63,6 +64,9 @@ public class Cadastro extends JFrame {
 	Connection conexao = null;
 	PreparedStatement pst = null;
 	ResultSet rs = null;
+	private JTextField txtFoto;
+	
+	JLabel lblFoto = new JLabel("Foto");
 	
 
 	/**
@@ -154,7 +158,7 @@ public class Cadastro extends JFrame {
 		});
 		
 		produto.setColumns(10);
-		produto.setBounds(103, 6, 345, 26);
+		produto.setBounds(103, 6, 203, 26);
 		panel_1.add(produto);
 		
 		JLabel lblQuantidade = new JLabel("Código");
@@ -171,7 +175,7 @@ public class Cadastro extends JFrame {
 		
 		preco = new JTextField();
 		preco.setColumns(10);
-		preco.setBounds(103, 131, 508, 26);
+		preco.setBounds(103, 131, 292, 26);
 		panel_1.add(preco);
 		
 		JLabel lblDescricao = new JLabel("Descricao");
@@ -255,17 +259,17 @@ public class Cadastro extends JFrame {
 		
 		descricao = new JTextField();
 		descricao.setColumns(10);
-		descricao.setBounds(103, 175, 508, 26);
+		descricao.setBounds(103, 175, 292, 26);
 		panel_1.add(descricao);
 		
 		codigo = new JTextField();
 		codigo.setColumns(10);
-		codigo.setBounds(103, 47, 508, 26);
+		codigo.setBounds(103, 47, 292, 26);
 		panel_1.add(codigo);
 		
 		unidade = new JComboBox();
 		unidade.setModel(new DefaultComboBoxModel(new String[] {"Kilo", "Unidade", "Saco", "Gramas", "Pote", "Duzia", "Litro"}));
-		unidade.setBounds(103, 91, 508, 27);
+		unidade.setBounds(103, 91, 292, 27);
 		panel_1.add(unidade);
 		
 		//evento mouse clicked, quando seleciona linha da tabela, preenche os campos automaticamente
@@ -281,15 +285,35 @@ public class Cadastro extends JFrame {
 		panel_1.add(tblProdutos);
 		
 		JLabel lblIdProduto = new JLabel("Id");
-		lblIdProduto.setBounds(460, 11, 61, 16);
+		lblIdProduto.setBounds(318, 11, 46, 16);
 		panel_1.add(lblIdProduto);
 		
 		txtIdProduto = new JTextField();
 		txtIdProduto.setEnabled(false);
 		txtIdProduto.setEditable(false);
 		txtIdProduto.setColumns(10);
-		txtIdProduto.setBounds(481, 6, 130, 26);
+		txtIdProduto.setBounds(340, 6, 55, 26);
 		panel_1.add(txtIdProduto);
+		
+		//JLabel lblFoto = new JLabel("Foto");
+		lblFoto.setBounds(407, 11, 204, 141);
+		panel_1.add(lblFoto);
+		
+		txtFoto = new JTextField();
+		txtFoto.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				ImageIcon imageIcon = new ImageIcon(new ImageIcon("/Users/edmar_sr/Desktop/Edmar/Programacao/Java/Agrestina/imagensProdutos/"+txtFoto.getText()+".png").getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
+				lblFoto.setIcon(imageIcon);
+			}
+		});
+		txtFoto.setColumns(10);
+		txtFoto.setBounds(470, 175, 141, 26);
+		panel_1.add(txtFoto);
+		
+		JLabel lblNomeFoto = new JLabel("Imagem");
+		lblNomeFoto.setBounds(404, 180, 61, 16);
+		panel_1.add(lblNomeFoto);
 		
 		JPanel panel = new JPanel();
 		tabbedPane.addTab("Clientes", null, panel, null);
@@ -477,7 +501,7 @@ public class Cadastro extends JFrame {
 	}
 	
 	private void alterarProduto() {
-		String sql = "update produtos set codigo = ?, preco = ?, nome = ?, descricao = ?, unidade = ? where id = ?";
+		String sql = "update produtos set codigo = ?, preco = ?, nome = ?, descricao = ?, unidade = ?, foto = ? where id = ?";
 		try {
 			pst = conexao.prepareStatement(sql);
 			pst.setString(1, codigo.getText());
@@ -485,7 +509,8 @@ public class Cadastro extends JFrame {
 			pst.setString(3, produto.getText());
 			pst.setString(4, descricao.getText());
 			pst.setString(5, (String) unidade.getSelectedItem());
-			pst.setString(6, txtIdProduto.getText());
+			pst.setString(6, txtFoto.getText());
+			pst.setString(7, txtIdProduto.getText());
 			int alteracao = pst.executeUpdate();
 			//System.out.println(alteracao);
 			
@@ -568,6 +593,11 @@ public class Cadastro extends JFrame {
 		descricao.setText(tblProdutos.getModel().getValueAt(setar, 5).toString());
 		unidade.setSelectedItem(tblProdutos.getModel().getValueAt(setar, 4).toString());
 		txtIdProduto.setText(tblProdutos.getModel().getValueAt(setar, 0).toString());
+		txtFoto.setText(tblProdutos.getModel().getValueAt(setar, 6).toString());
+		//String foto = 
+		//lblFoto.setIcon(txtFoto.getText());
+		ImageIcon imageIcon = new ImageIcon(new ImageIcon("/Users/edmar_sr/Desktop/Edmar/Programacao/Java/Agrestina/imagensProdutos/"+txtFoto.getText()+".png").getImage().getScaledInstance(140, 140, Image.SCALE_DEFAULT));
+		lblFoto.setIcon(imageIcon);
 	}
 	
 	private void setCamposClientes() {
@@ -595,11 +625,13 @@ public class Cadastro extends JFrame {
 		codigo.setText(null);
 		descricao.setText(null);
 		txtIdProduto.setText(null);
+		txtFoto.setText(null);
+		lblFoto.setIcon(null);
 	}
 
 	private void salvarProduto() {
 		
-		String sql = "insert into produtos (codigo,preco,descricao,nome,unidade) values (?,?,?,?,?)";
+		String sql = "insert into produtos (codigo,preco,descricao,nome,unidade,foto) values (?,?,?,?,?,?)";
 		try {
 			pst = conexao.prepareStatement(sql);
 			pst.setString(1, codigo.getText());
@@ -607,6 +639,7 @@ public class Cadastro extends JFrame {
 			pst.setString(3, descricao.getText());
 			pst.setString(4, produto.getText());
 			pst.setString(5, (String) unidade.getSelectedItem());
+			pst.setString(6, txtFoto.getText());
 			pst.execute();
 			
 			JOptionPane.showMessageDialog(null, "Registro incluído com sucesso");

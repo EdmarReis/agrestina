@@ -1,9 +1,6 @@
 
 import java.awt.EventQueue;
-
 import javax.swing.JFrame;
-
-import not_used.Connection;
 import persistence.DAO;
 import telas.Login;
 
